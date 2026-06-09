@@ -4,8 +4,9 @@ import { resolve } from 'path'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const BASE_URL = 'http://localhost:5173'
-const SUPABASE_URL = 'https://yfdwtfricvquakrtarey.supabase.co'
-const AUTH_TOKEN_KEY = `sb-yfdwtfricvquakrtarey-auth-token`
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
+const SUPABASE_REF = SUPABASE_URL.match(/https:\/\/(.+)\.supabase\.co/)?.[1] || 'placeholder'
+const AUTH_TOKEN_KEY = `sb-${SUPABASE_REF}-auth-token`
 
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms))

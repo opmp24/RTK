@@ -10,4 +10,4 @@ screenshots/
 coverage/
 .vite/
 nul
-node_modules
+supabase/.temp/
