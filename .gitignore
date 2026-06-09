@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.specstory/
+.env
+.env.local
+.DS_Store
+*.log
+screenshots/
+coverage/
+.vite/
+nul
+node_modules
