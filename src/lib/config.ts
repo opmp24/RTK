@@ -3,6 +3,9 @@ export const config = {
     url: import.meta.env.VITE_SUPABASE_URL ?? '',
     anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
   },
+  auth: {
+    redirectTo: import.meta.env.VITE_SITE_URL || window.location.origin,
+  },
   app: {
     name: 'RTK — Reporta Tu Ciudad',
     description: 'Reporta problemas en tu ciudad: baches, señaléticas, luminarias, accidentes y más.',
