@@ -64,17 +64,35 @@ function MapCenterUpdater({ center }: { center?: [number, number] }) {
   return null
 }
 
-function MapController({ pickingLocation, onMapClick }: { pickingLocation?: boolean; onMapClick?: (lat: number, lng: number) => void }) {
+interface MapControllerProps {
+  pickingLocation?: boolean
+  onMapClick?: (lat: number, lng: number) => void
+  reports: Report[]
+  onReportClick?: (reportId: string) => void
+}
+
+function MapController({ pickingLocation, onMapClick, reports, onReportClick }: MapControllerProps) {
   const map = useMap()
 
   useEffect(() => {
-    if (!pickingLocation) return
     const handler = (e: L.LeafletMouseEvent) => {
-      onMapClick?.(e.latlng.lat, e.latlng.lng)
+      if (pickingLocation) {
+        onMapClick?.(e.latlng.lat, e.latlng.lng)
+        return
+      }
+      const threshold = 0.001
+      for (const report of reports) {
+        const dlat = Math.abs(report.lat - e.latlng.lat)
+        const dlng = Math.abs(report.lng - e.latlng.lng)
+        if (dlat < threshold && dlng < threshold) {
+          onReportClick?.(report.id)
+          return
+        }
+      }
     }
     map.on('click', handler)
     return () => { map.off('click', handler) }
-  }, [map, pickingLocation, onMapClick])
+  }, [map, pickingLocation, onMapClick, reports, onReportClick])
 
   return null
 }
@@ -102,7 +120,7 @@ export function MapView({ reports, categories, onMapClick, pickingLocation, user
         />
 
         <MapCenterUpdater center={userCenter} />
-        <MapController pickingLocation={pickingLocation} onMapClick={onMapClick} />
+        <MapController pickingLocation={pickingLocation} onMapClick={onMapClick} reports={reports} onReportClick={onReportClick} />
 
         <MarkerClusterGroup chunkedLoading>
           {reports.map((report) => {
@@ -112,9 +130,6 @@ export function MapView({ reports, categories, onMapClick, pickingLocation, user
                 key={report.id}
                 position={[report.lat, report.lng]}
                 icon={categoryIcon(category?.color ?? '#6b7280', category?.icon ?? 'CircleDot', report.photo_url)}
-                eventHandlers={{
-                  click: () => onReportClick?.(report.id),
-                }}
               />
             )
           })}
