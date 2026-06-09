@@ -10,58 +10,62 @@ export function useReports() {
   const lastSubmitRef = useRef(0)
 
   const fetchReports = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    const { data, error: fetchError } = await supabase
-      .from('reports')
-      .select('*, category:categories(*)')
-      .order('created_at', { ascending: false })
+      const { data, error: fetchError } = await supabase
+        .from('reports')
+        .select('*, category:categories(*)')
+        .order('created_at', { ascending: false })
 
-    if (fetchError) {
-      setError(fetchError.message)
-      return
-    }
+      if (fetchError) {
+        setError(fetchError.message)
+        return
+      }
 
-    if (!data) {
-      setReports([])
-      setLoading(false)
-      return
-    }
+      if (!data) {
+        setReports([])
+        return
+      }
 
-    let voteCounts = new Map<string, { up: number; down: number }>()
-    let userVoteMap = new Map<string, 'up' | 'down'>()
+      let voteCounts = new Map<string, { up: number; down: number }>()
+      let userVoteMap = new Map<string, 'up' | 'down'>()
 
-    const { data: votes } = await supabase
-      .from('report_votes')
-      .select('report_id, vote')
-
-    if (votes) {
-      votes.forEach(v => {
-        const current = voteCounts.get(v.report_id) ?? { up: 0, down: 0 }
-        current[v.vote as 'up' | 'down']++
-        voteCounts.set(v.report_id, current)
-      })
-    }
-
-    if (user) {
-      const { data: userVotes } = await supabase
+      const { data: votes } = await supabase
         .from('report_votes')
         .select('report_id, vote')
-        .eq('user_id', user.id)
 
-      if (userVotes) {
-        userVotes.forEach(v => userVoteMap.set(v.report_id, v.vote as 'up' | 'down'))
+      if (votes) {
+        votes.forEach(v => {
+          const current = voteCounts.get(v.report_id) ?? { up: 0, down: 0 }
+          current[v.vote as 'up' | 'down']++
+          voteCounts.set(v.report_id, current)
+        })
       }
+
+      if (user) {
+        const { data: userVotes } = await supabase
+          .from('report_votes')
+          .select('report_id, vote')
+          .eq('user_id', user.id)
+
+        if (userVotes) {
+          userVotes.forEach(v => userVoteMap.set(v.report_id, v.vote as 'up' | 'down'))
+        }
+      }
+
+      const enriched = (data as unknown as Report[]).map(r => ({
+        ...r,
+        vote_count: voteCounts.get(r.id) ?? { up: 0, down: 0 },
+        user_vote: userVoteMap.get(r.id) ?? null,
+      }))
+
+      setReports(enriched)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar reportes')
+    } finally {
+      setLoading(false)
     }
-
-    const enriched = (data as unknown as Report[]).map(r => ({
-      ...r,
-      vote_count: voteCounts.get(r.id) ?? { up: 0, down: 0 },
-      user_vote: userVoteMap.get(r.id) ?? null,
-    }))
-
-    setReports(enriched)
-    setLoading(false)
   }, [])
 
   useEffect(() => {

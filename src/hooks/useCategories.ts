@@ -11,19 +11,26 @@ export function useCategories() {
     let cancelled = false
 
     const fetchCategories = async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name')
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name')
 
-      if (cancelled) return
+        if (cancelled) return
 
-      if (error) {
-        setError(error.message)
-      } else if (data) {
-        setCategories(data as Category[])
+        if (error) {
+          setError(error.message)
+        } else if (data) {
+          setCategories(data as Category[])
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Error al cargar categorías')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-      setLoading(false)
     }
 
     fetchCategories()
