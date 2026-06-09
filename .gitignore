@@ -11,3 +11,5 @@ coverage/
 .vite/
 nul
 supabase/.temp/
+scripts/qa-tests.mjs
+scripts/android-diagnostic.mjs
